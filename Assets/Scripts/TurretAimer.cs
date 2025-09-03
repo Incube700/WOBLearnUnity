@@ -2,30 +2,27 @@ using UnityEngine;
 
 /// <summary>
 /// Поворачивает башню к курсору и ограничивает отклонение от корпуса.
+/// Предполагается, что башня «смотрит» вдоль локальной оси Y.
 /// </summary>
 public class TurretAimer : MonoBehaviour
 {
-    [SerializeField] private Transform turretPivot; // точка вращения башни
-    [SerializeField] private float maxAimAngle = 30f; // максимальное отклонение от корпуса
+    [SerializeField] private Transform turretPivot;        // точка вращения башни
+    [SerializeField] private float maxAimAngle = 30f;      // предел отклонения (°)
 
-    private Camera mainCamera;                      // ссылка на основную камеру
-    private Transform body;                         // ссылка на трансформ корпуса
+    private Camera mainCamera;                            // ссылка на камеру
+    private Transform body;                               // трансформ корпуса
 
     private void Awake()
     {
-        mainCamera = Camera.main ?? FindObjectOfType<Camera>(); // находим основную камеру
-        body = transform;                           // скрипт висит на корпусе игрока
+        mainCamera = Camera.main ?? FindObjectOfType<Camera>(); // ищем камеру
+        body = transform;                                // скрипт висит на корпусе
 
-        // Если pivot не назначен в инспекторе — попробуем найти автоматически
+        // Автопоиск pivot'а, если не задан
         if (turretPivot == null)
         {
-            // 1) Ищем дочерний трансформ с точным именем
-            var found = transform.Find("TurretPivot");
-
-            // 2) Ищем по эвристике имени среди всех потомков
+            var found = transform.Find("TurretPivot");   // ищем по имени
             if (found == null)
-            {
-                foreach (var t in GetComponentsInChildren<Transform>(true))
+                foreach (var t in GetComponentsInChildren<Transform>(true)) // перебираем дочерние
                 {
                     if (t == transform) continue;
                     string n = t.name.ToLowerInvariant();
@@ -35,32 +32,35 @@ public class TurretAimer : MonoBehaviour
                         break;
                     }
                 }
-            }
-
-            // 3) Если ничего не нашли — берём первого ребёнка, иначе сам объект
             if (found == null && transform.childCount > 0)
-                found = transform.GetChild(0);
+                found = transform.GetChild(0);           // берём первого ребёнка
 
-            turretPivot = found != null ? found : transform;
-
+            turretPivot = found != null ? found : transform; //fallback на сам корпус
             if (found == null)
-                Debug.LogWarning("TurretAimer: turretPivot не назначен и не найден — использую transform самого объекта.", this);
+                Debug.LogWarning("TurretAimer: turretPivot не найден — использую transform корпуса.", this);
         }
     }
 
     private void Update()
     {
         if (mainCamera == null || GameInput.Instance == null)
-            return; // подстраховка, чтобы не падать, если что-то не инициализировалось
+            return;                                      // подстраховка
 
-        Vector3 mouseScreen = GameInput.Instance.Aim;            // позиция курсора на экране
-        Vector3 mouseWorld = mainCamera.ScreenToWorldPoint(mouseScreen); // переводим в мировые координаты
-        Vector2 dir = (mouseWorld - turretPivot.position).normalized;    // направление от башни к курсору
-        float desiredAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;  // требуемый угол к курсору
-        float bodyAngle = body.eulerAngles.z;                            // текущий угол корпуса
-        float relative = Mathf.DeltaAngle(bodyAngle, desiredAngle);      // угол между корпусом и курсором
-        float clamped = Mathf.Clamp(relative, -maxAimAngle, maxAimAngle); // ограничиваем отклонение
-        float finalAngle = bodyAngle + clamped;                          // итоговый угол башни
-        turretPivot.rotation = Quaternion.Euler(0f, 0f, finalAngle);     // устанавливаем поворот башни
+        Vector3 mouseScreen = GameInput.Instance.Aim;    // координаты курсора на экране
+        // В перспективной камере нужно указать глубину до плоскости объекта
+        mouseScreen.z = mainCamera.WorldToScreenPoint(turretPivot.position).z;
+        Vector3 mouseWorld = mainCamera.ScreenToWorldPoint(mouseScreen); // переводим в мир
+
+        Vector3 dir3 = (mouseWorld - turretPivot.position);
+        dir3.z = 0f;                                     // работаем в 2D
+        Vector2 dir = ((Vector2)dir3).normalized;        // направление к курсору
+
+        // Если спрайт/башня ориентированы «вверх» по умолчанию, корректируем угол на -90°
+        float desiredAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
+        float bodyAngle = body.eulerAngles.z;            // текущий угол корпуса
+        float relative = Mathf.DeltaAngle(bodyAngle, desiredAngle);      // относительный угол
+        float clamped = Mathf.Clamp(relative, -maxAimAngle, maxAimAngle);// ограничиваем
+        float finalAngle = bodyAngle + clamped;          // итоговый угол башни
+        turretPivot.rotation = Quaternion.Euler(0f, 0f, finalAngle);     // применяем поворот
     }
 }
