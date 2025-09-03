@@ -1,4 +1,7 @@
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
@@ -33,9 +36,38 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Плавный ввод (ось с интерполяцией)
-        steer = Input.GetAxis("Horizontal");
-        throttle = Input.GetAxis("Vertical");
+        // Чтение ввода поддерживает новый Input System и старый Input Manager
+        float h = 0f;
+        float v = 0f;
+
+#if ENABLE_INPUT_SYSTEM
+        // Новый Input System — опрос устройств напрямую (без обязательного InputActions)
+        var gamepad = Gamepad.current;
+        if (gamepad != null)
+        {
+            Vector2 stick = gamepad.leftStick.ReadValue();
+            h = stick.x;
+            v = stick.y;
+        }
+        else
+        {
+            var kbd = Keyboard.current;
+            if (kbd != null)
+            {
+                if (kbd.aKey.isPressed) h -= 1f;
+                if (kbd.dKey.isPressed) h += 1f;
+                if (kbd.sKey.isPressed) v -= 1f;
+                if (kbd.wKey.isPressed) v += 1f;
+            }
+        }
+#else
+        // Старый Input Manager — оси из Project Settings > Input Manager
+        h = Input.GetAxis("Horizontal");
+        v = Input.GetAxis("Vertical");
+#endif
+
+        steer = h;
+        throttle = v;
 
         // Мёртвая зона
         if (Mathf.Abs(steer) < deadZone) steer = 0f;
