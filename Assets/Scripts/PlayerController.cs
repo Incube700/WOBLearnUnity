@@ -3,7 +3,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 #endif
 
-[RequireComponent(typeof(Rigidbody2D))]
+/// <summary>
+/// Управляет движением и поворотом корпуса танка.
+/// Предполагается, что «нос» корпуса направлен вдоль локальной оси Y (зелёная стрелка).
+/// </summary>
+[RequireComponent(typeof(Rigidbody2D))]                    // гарантируем наличие Rigidbody2D
 public class PlayerController : MonoBehaviour
 {
     [Header("Танк — движение (м/с)")]
@@ -19,33 +23,32 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float minTurnFactor = 0.4f;   // поворот на малых скоростях (0..1)
 
     [Header("Ввод")]
-    [SerializeField, Range(0f, 0.3f)] private float deadZone = 0.05f;
+    [SerializeField, Range(0f, 0.3f)] private float deadZone = 0.05f; // мёртвая зона джойстика
 
-    private Rigidbody2D rb;
-    private float throttle; // -1..1 (W/S)
-    private float steer;    // -1..1 (A/D)
-    private float currentSpeed; // текущая поступательная скорость вдоль корпуса (м/с)
+    private Rigidbody2D rb;                                // кэш Rigidbody2D
+    private float throttle;                                // ось газа −1..1
+    private float steer;                                   // ось поворота −1..1
+    private float currentSpeed;                            // текущая скорость вдоль корпуса
 
-    void Awake()
+    private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
-        rb.gravityScale = 0f; // топ-даун — без гравитации
-        rb.interpolation = RigidbodyInterpolation2D.Interpolate; // сглаживание
-        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; // быстрые движения
+        rb = GetComponent<Rigidbody2D>();                  // получаем компонент
+        rb.gravityScale = 0f;                              // топ‑даун — без гравитации
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate; // сглаживаем физику
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; // для быстрых объектов
     }
 
-    void Update()
+    private void Update()
     {
-        // Чтение ввода поддерживает новый Input System и старый Input Manager
-        float h = 0f;
-        float v = 0f;
+        float h = 0f;                                      // ось поворота
+        float v = 0f;                                      // ось газа
 
 #if ENABLE_INPUT_SYSTEM
-        // Новый Input System — опрос устройств напрямую (без обязательного InputActions)
+        // Новый Input System: читаем с клавиатуры или геймпада
         var gamepad = Gamepad.current;
         if (gamepad != null)
         {
-            Vector2 stick = gamepad.leftStick.ReadValue();
+            Vector2 stick = gamepad.leftStick.ReadValue(); // левый стик
             h = stick.x;
             v = stick.y;
         }
@@ -61,76 +64,55 @@ public class PlayerController : MonoBehaviour
             }
         }
 #else
-        // Старый Input Manager — оси из Project Settings > Input Manager
+        // Старый Input Manager
         h = Input.GetAxis("Horizontal");
         v = Input.GetAxis("Vertical");
 #endif
 
-        steer = h;
-        throttle = v;
-
-        // Мёртвая зона
-        if (Mathf.Abs(steer) < deadZone) steer = 0f;
-        if (Mathf.Abs(throttle) < deadZone) throttle = 0f;
+        steer = Mathf.Abs(h) < deadZone ? 0f : h;          // фильтруем мёртвую зону
+        throttle = Mathf.Abs(v) < deadZone ? 0f : v;
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        float dt = Time.fixedDeltaTime;
+        float dt = Time.fixedDeltaTime;                    // шаг физического кадра
 
-        // 1) Продольная динамика: разгон/торможение/замедление
-        if (Mathf.Abs(throttle) > 0f)
+        // -------- Продольная динамика --------
+        if (Mathf.Abs(throttle) > 0f)                      // газ нажали
         {
-            float desiredSign = Mathf.Sign(throttle);
+            float desiredSign = Mathf.Sign(throttle);      // направление желаемого движения
 
-            // Если газ противоположен текущему движению — сначала тормозим
+            // Если едем задом, а жмём вперёд — сначала тормозим
             if (Mathf.Sign(currentSpeed) != desiredSign && Mathf.Abs(currentSpeed) > 0.01f)
-            {
                 currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, brakeDecel * dt);
-            }
             else
             {
-                float targetMax = desiredSign > 0f ? maxForwardSpeed : maxReverseSpeed;
-                float targetSpeed = throttle * targetMax; // пропорционально положению газа
-                currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, acceleration * dt);
+                float targetMax = desiredSign > 0f ? maxForwardSpeed : maxReverseSpeed; // предел скорости
+                float targetSpeed = throttle * targetMax; // желаемая скорость
+                currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, acceleration * dt); // разгон/замедление
             }
         }
-        else
-        {
-            // Отпущен газ — катимся и замедляемся
-            currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, idleDecel * dt);
-        }
+        else                                               // газ отпущен
+            currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, idleDecel * dt); // катимся и замедляемся
 
-        // 2) Поворот корпуса (как у танка)
+        // -------- Поворот корпуса --------
         float deltaAngle = 0f;
-        if (Mathf.Abs(steer) > 0f)
+        if (Mathf.Abs(steer) > 0f)                         // есть ввод поворота
         {
-            if (Mathf.Abs(currentSpeed) > 0.02f)
+            if (Mathf.Abs(currentSpeed) > 0.02f)           // едем — поворот зависит от скорости
             {
-                // На ходу: масштабируем скорость поворота от 0..1 по текущей скорости
-                float speed01 = Mathf.Clamp01(Mathf.Abs(currentSpeed) / Mathf.Max(0.001f, maxForwardSpeed));
-                float turnAtSpeed = Mathf.Lerp(turnSpeedAtMax * minTurnFactor, turnSpeedAtMax, speed01);
-                // Танковое управление: поворот не инвертируется при движении назад
-                deltaAngle = steer * turnAtSpeed * dt;
+                float speed01 = Mathf.Clamp01(Mathf.Abs(currentSpeed) / Mathf.Max(0.001f, maxForwardSpeed)); // нормируем скорость
+                float turnAtSpeed = Mathf.Lerp(turnSpeedAtMax * minTurnFactor, turnSpeedAtMax, speed01);     // скорость поворота
+                deltaAngle = steer * turnAtSpeed * dt;     // итоговый поворот за кадр
             }
-            else
-            {
-                // На месте — разворот вокруг центра
+            else                                           // стоим — разворот на месте
                 deltaAngle = steer * turnSpeedInPlace * dt;
-            }
         }
+        rb.MoveRotation(rb.rotation + deltaAngle);         // применяем поворот
 
-        // Применяем поворот и смещение вперёд по корпусу
-        rb.MoveRotation(rb.rotation + deltaAngle);
-
-        // Двигаем вдоль локальной "вперёд" (ось up у спрайта)
-        Vector2 forward = rb.transform.up; // в 2D вперёд = up
-        Vector2 step = forward * currentSpeed * dt;
-        rb.MovePosition(rb.position + step);
+        // -------- Перемещение вперёд --------
+        Vector2 forward = rb.transform.up;                 // локальная ось Y — «нос» танка
+        Vector2 step = forward * currentSpeed * dt;        // смещение вдоль носа
+        rb.MovePosition(rb.position + step);               // перемещаем Rigidbody2D
     }
-
-    // Сервис
-    public float CurrentSpeed => currentSpeed;
-    public void SetMaxForwardSpeed(float v) => maxForwardSpeed = Mathf.Max(0f, v);
-    public void SetMaxReverseSpeed(float v) => maxReverseSpeed = Mathf.Max(0f, v);
 }
