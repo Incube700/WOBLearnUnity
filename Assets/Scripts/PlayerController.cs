@@ -103,10 +103,10 @@ public class PlayerController : MonoBehaviour
             {
                 float speed01 = Mathf.Clamp01(Mathf.Abs(currentSpeed) / Mathf.Max(0.001f, maxForwardSpeed)); // нормируем скорость
                 float turnAtSpeed = Mathf.Lerp(turnSpeedAtMax * minTurnFactor, turnSpeedAtMax, speed01);     // скорость поворота
-                deltaAngle = steer * turnAtSpeed * dt;     // итоговый поворот за кадр
+                deltaAngle = -steer * turnAtSpeed * dt;    // инвертируем знак: A-влево, D-вправо
             }
             else                                           // стоим — разворот на месте
-                deltaAngle = steer * turnSpeedInPlace * dt;
+                deltaAngle = -steer * turnSpeedInPlace * dt; // инвертируем знак: A-влево, D-вправо
         }
         rb.MoveRotation(rb.rotation + deltaAngle);         // применяем поворот
 
