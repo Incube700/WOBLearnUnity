@@ -8,6 +8,8 @@ public class TurretAimer : MonoBehaviour
 {
     [SerializeField] private Transform turretPivot;        // точка вращения башни
     [SerializeField] private float maxAimAngle = 30f;      // предел отклонения (°)
+    [SerializeField] private bool limitByBody = false;     // ограничивать ли поворот относительно корпуса
+    [SerializeField] private float spriteUpOffset = -90f;  // поправка, если спрайт «смотрит» вверх
 
     private Camera mainCamera;                            // ссылка на камеру
     private Transform body;                               // трансформ корпуса
@@ -55,12 +57,22 @@ public class TurretAimer : MonoBehaviour
         dir3.z = 0f;                                     // работаем в 2D
         Vector2 dir = ((Vector2)dir3).normalized;        // направление к курсору
 
-        // Если спрайт/башня ориентированы «вверх» по умолчанию, корректируем угол на -90°
-        float desiredAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
-        float bodyAngle = body.eulerAngles.z;            // текущий угол корпуса
-        float relative = Mathf.DeltaAngle(bodyAngle, desiredAngle);      // относительный угол
-        float clamped = Mathf.Clamp(relative, -maxAimAngle, maxAimAngle);// ограничиваем
-        float finalAngle = bodyAngle + clamped;          // итоговый угол башни
-        turretPivot.rotation = Quaternion.Euler(0f, 0f, finalAngle);     // применяем поворот
+        // Угол к курсору с учётом ориентации спрайта
+        float desiredAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg + spriteUpOffset;
+
+        float finalAngle;
+        if (limitByBody)
+        {
+            float bodyAngle = body.eulerAngles.z;            // текущий угол корпуса
+            float relative = Mathf.DeltaAngle(bodyAngle, desiredAngle);      // относительный угол
+            float clamped = Mathf.Clamp(relative, -maxAimAngle, maxAimAngle);// ограничиваем
+            finalAngle = bodyAngle + clamped;                 // итоговый угол башни
+        }
+        else
+        {
+            finalAngle = desiredAngle;                        // свободное наведение
+        }
+
+        turretPivot.rotation = Quaternion.Euler(0f, 0f, finalAngle); // применяем поворот
     }
 }
