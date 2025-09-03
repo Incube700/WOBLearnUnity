@@ -35,6 +35,7 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();                  // получаем компонент
         rb.gravityScale = 0f;                              // топ‑даун — без гравитации
         rb.interpolation = RigidbodyInterpolation2D.Interpolate; // сглаживаем физику
+        rb.freezeRotation = false;                         // разрешаем вращение
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; // для быстрых объектов
     }
 
@@ -76,6 +77,7 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         float dt = Time.fixedDeltaTime;                    // шаг физического кадра
+        Vector2 forward = rb.transform.up;                 // локальная ось Y — «нос» танка
 
         // -------- Продольная динамика --------
         if (Mathf.Abs(throttle) > 0f)                      // газ нажали
@@ -84,35 +86,37 @@ public class PlayerController : MonoBehaviour
 
             // Если едем задом, а жмём вперёд — сначала тормозим
             if (Mathf.Sign(currentSpeed) != desiredSign && Mathf.Abs(currentSpeed) > 0.01f)
-                currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, brakeDecel * dt);
+            {
+                rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, brakeDecel * dt); // плавное торможение
+                currentSpeed = Vector2.Dot(rb.linearVelocity, forward); // пересчитываем скаляр скорости
+            }
             else
             {
                 float targetMax = desiredSign > 0f ? maxForwardSpeed : maxReverseSpeed; // предел скорости
                 float targetSpeed = throttle * targetMax; // желаемая скорость
                 currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, acceleration * dt); // разгон/замедление
+                rb.linearVelocity = forward * currentSpeed;     // задаём скорость вдоль корпуса
             }
         }
         else                                               // газ отпущен
-            currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, idleDecel * dt); // катимся и замедляемся
+        {
+            rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, idleDecel * dt); // катимся и тормозим
+            currentSpeed = Vector2.Dot(rb.linearVelocity, forward); // пересчитываем скаляр скорости
+        }
 
         // -------- Поворот корпуса --------
-        float deltaAngle = 0f;
+        float angularSpeed = 0f;
         if (Mathf.Abs(steer) > 0f)                         // есть ввод поворота
         {
             if (Mathf.Abs(currentSpeed) > 0.02f)           // едем — поворот зависит от скорости
             {
                 float speed01 = Mathf.Clamp01(Mathf.Abs(currentSpeed) / Mathf.Max(0.001f, maxForwardSpeed)); // нормируем скорость
                 float turnAtSpeed = Mathf.Lerp(turnSpeedAtMax * minTurnFactor, turnSpeedAtMax, speed01);     // скорость поворота
-                deltaAngle = -steer * turnAtSpeed * dt;    // инвертируем знак: A-влево, D-вправо
+                angularSpeed = -steer * turnAtSpeed;       // инвертируем знак: A-влево, D-вправо
             }
             else                                           // стоим — разворот на месте
-                deltaAngle = -steer * turnSpeedInPlace * dt; // инвертируем знак: A-влево, D-вправо
+                angularSpeed = -steer * turnSpeedInPlace;  // инвертируем знак: A-влево, D-вправо
         }
-        rb.MoveRotation(rb.rotation + deltaAngle);         // применяем поворот
-
-        // -------- Перемещение вперёд --------
-        Vector2 forward = rb.transform.up;                 // локальная ось Y — «нос» танка
-        Vector2 step = forward * currentSpeed * dt;        // смещение вдоль носа
-        rb.MovePosition(rb.position + step);               // перемещаем Rigidbody2D
+        rb.angularVelocity = angularSpeed;                 // задаём угловую скорость
     }
 }

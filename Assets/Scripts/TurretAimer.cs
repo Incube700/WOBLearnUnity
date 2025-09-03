@@ -11,12 +11,13 @@ public class TurretAimer : MonoBehaviour
     [SerializeField] private bool limitByBody = false;     // ограничивать ли поворот относительно корпуса
     [SerializeField] private float spriteUpOffset = -90f;  // поправка, если спрайт «смотрит» вверх
 
-    private Camera mainCamera;                            // ссылка на камеру
+    [SerializeField] private Camera mainCamera;            // основная камера, можно задать вручную
     private Transform body;                               // трансформ корпуса
 
     private void Awake()
     {
-        mainCamera = Camera.main ?? FindObjectOfType<Camera>(); // ищем камеру
+        if (mainCamera == null)
+            mainCamera = Camera.main ?? FindObjectOfType<Camera>(); // ищем камеру, если не задана
         body = transform;                                // скрипт висит на корпусе
 
         // Автопоиск pivot'а, если не задан
@@ -45,8 +46,13 @@ public class TurretAimer : MonoBehaviour
 
     private void Update()
     {
-        if (mainCamera == null || GameInput.Instance == null)
-            return;                                      // подстраховка
+        if (mainCamera == null)
+        {
+            Debug.LogError("TurretAimer: mainCamera не назначена", this); // сообщаем об ошибке
+            return;                                      // прекращаем работу метода
+        }
+        if (GameInput.Instance == null)
+            return;                                      // нет инпута — выходим
 
         Vector3 mouseScreen = GameInput.Instance.Aim;    // координаты курсора на экране
         // В перспективной камере нужно указать глубину до плоскости объекта

@@ -46,6 +46,15 @@ public class GameInput : MonoBehaviour
         moveAction.Disable();                    // выключаем движение
         aimAction.Disable();                     // выключаем наведение
         fireAction.Disable();                    // выключаем выстрел
+        actions.Dispose();                       // освобождаем ресурсы набора
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)                    // убеждаемся, что уничтожаем свой экземпляр
+        {
+            Instance = null;                    // сбрасываем ссылку на синглтон
+        }
     }
 
     private void Update()
