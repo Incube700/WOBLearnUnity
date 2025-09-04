@@ -318,7 +318,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turretPivot: {fileID: 7119384022539836482}
-  maxAimAngle: 2
+  maxAimAngle: 3
   limitByBody: 1
   spriteUpOffset: -90
   mainCamera: {fileID: 0}

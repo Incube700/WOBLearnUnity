@@ -21,7 +21,7 @@ public static class HitResolver
         float angle = MathAngles.ImpactAngle(velocity, surfaceNormal); // вычисляем угол удара
         bool canDamage = ArmorAngleResolver.CanPenetrate(angle, criticalAngle); // проверяем критический угол
 
-        Damageable dmg = target.GetComponent<Damageable>();            // ищем компонент урона
+        Damageable dmg = target.GetComponentInParent<Damageable>();    // ищем компонент урона (на объекте или родителе)
         if (dmg != null && canDamage)                                  // есть цель и угол подходящий
         {
             dmg.ApplyDamage(damage);                                   // наносим урон

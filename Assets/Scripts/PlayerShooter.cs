@@ -15,11 +15,27 @@ public class PlayerShooter : MonoBehaviour
 
     private void Update()
     {
-        if (GameInput.Instance == null)                    // нет системы ввода
-            return;                                        // выходим
-
         cooldownTimer -= Time.deltaTime;                   // уменьшаем таймер
-        if (GameInput.Instance.Fire && cooldownTimer <= 0f)// нажата кнопка и готово стрелять
+        bool wantShoot = false;
+
+        // Предпочитаем централизованный ввод, но поддерживаем резерв
+        if (GameInput.Instance != null)
+        {
+            wantShoot = GameInput.Instance.Fire || GameInput.Instance.FireHeld; // клик или удержание
+        }
+        else
+        {
+#if ENABLE_INPUT_SYSTEM
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (mouse != null && mouse.leftButton.isPressed) wantShoot = true;
+            if (kb != null && kb.spaceKey.isPressed) wantShoot = true;
+#else
+            if (Input.GetMouseButton(0) || Input.GetKey(KeyCode.Space)) wantShoot = true;
+#endif
+        }
+
+        if (wantShoot && cooldownTimer <= 0f)              // есть запрос на выстрел
         {
             Shoot();                                       // выполняем выстрел
             cooldownTimer = fireCooldown;                  // сбрасываем таймер

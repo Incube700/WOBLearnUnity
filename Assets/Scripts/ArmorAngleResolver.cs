@@ -12,6 +12,6 @@ public static class ArmorAngleResolver
     /// </summary>
     public static bool CanPenetrate(float impactAngle, float criticalAngle = DefaultCriticalAngle)
     {
-        return impactAngle > criticalAngle;                 // true, если угол достаточен
+        return impactAngle < criticalAngle;                 // true, если угол достаточен
     }
 }

@@ -29,6 +29,11 @@ public class PlayerController : MonoBehaviour
     private float throttle;                                // ось газа −1..1
     private float steer;                                   // ось поворота −1..1
     private float currentSpeed;                            // текущая скорость вдоль корпуса
+    
+    [Header("Debug/Gizmos")]
+    [SerializeField] private bool drawFrontGizmo = true;   // рисовать ли маркер «носа»
+    [SerializeField] private float frontGizmoLength = 0.6f;// длина маркера
+    [SerializeField] private Color frontGizmoColor = new Color(0f, 1f, 0f, 1f); // зелёный
 
     private void Awake()
     {
@@ -45,23 +50,32 @@ public class PlayerController : MonoBehaviour
         float v = 0f;                                      // ось газа
 
 #if ENABLE_INPUT_SYSTEM
-        // Новый Input System: читаем с клавиатуры или геймпада
-        var gamepad = Gamepad.current;
-        if (gamepad != null)
+        // Новый Input System: предпочтительно используем централизованный GameInput
+        if (GameInput.Instance != null)
         {
-            Vector2 stick = gamepad.leftStick.ReadValue(); // левый стик
-            h = stick.x;
-            v = stick.y;
+            Vector2 mv = GameInput.Instance.Move;
+            h = mv.x;
+            v = mv.y;
         }
         else
         {
-            var kbd = Keyboard.current;
-            if (kbd != null)
+            var gamepad = Gamepad.current;
+            if (gamepad != null)
             {
-                if (kbd.aKey.isPressed) h -= 1f;
-                if (kbd.dKey.isPressed) h += 1f;
-                if (kbd.sKey.isPressed) v -= 1f;
-                if (kbd.wKey.isPressed) v += 1f;
+                Vector2 stick = gamepad.leftStick.ReadValue(); // левый стик
+                h = stick.x;
+                v = stick.y;
+            }
+            else
+            {
+                var kbd = Keyboard.current;
+                if (kbd != null)
+                {
+                    if (kbd.aKey.isPressed) h -= 1f;
+                    if (kbd.dKey.isPressed) h += 1f;
+                    if (kbd.sKey.isPressed) v -= 1f;
+                    if (kbd.wKey.isPressed) v += 1f;
+                }
             }
         }
 #else
@@ -119,4 +133,16 @@ public class PlayerController : MonoBehaviour
         }
         rb.angularVelocity = angularSpeed;                 // задаём угловую скорость
     }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmos()
+    {
+        if (!drawFrontGizmo) return;
+        Gizmos.color = frontGizmoColor;
+        Vector3 p = transform.position;
+        Vector3 tip = p + transform.up * frontGizmoLength;
+        Gizmos.DrawLine(p, tip);
+        Gizmos.DrawSphere(tip, frontGizmoLength * 0.08f);
+    }
+#endif
 }

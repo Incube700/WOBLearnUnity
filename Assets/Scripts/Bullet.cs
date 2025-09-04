@@ -1,5 +1,6 @@
 
 using UnityEngine;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Полёт пули с рикошетами и расчётом угла брони.
@@ -19,6 +20,16 @@ public class Bullet : MonoBehaviour
 
     private Rigidbody2D rb;                                 // кэш тела
     private int ricochetCount;                              // число рикошетов
+    private Vector2 velocity;                               // текущая скорость (ручное управление)
+
+    private readonly RaycastHit2D[] hits = new RaycastHit2D[8]; // буфер попаданий на шаге
+    private ContactFilter2D castFilter;                         // фильтр для Cast
+
+    [Header("Отладка")]
+    [SerializeField] private bool debugDrawReflection = true;   // рисовать ли луч отражения
+    [SerializeField] private float debugRayLength = 1.2f;       // длина луча
+    [SerializeField] private float debugRayDuration = 0.2f;     // время жизни луча
+    [SerializeField] private Color debugReflectionColor = new Color(0f, 1f, 1f, 1f); // цвет отражения
 
     private void Awake()
     {
@@ -26,6 +37,7 @@ public class Bullet : MonoBehaviour
         rb.gravityScale = 0f;                               // топ‑даун — без гравитации
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; // точные столкновения
         rb.freezeRotation = true;                           // пуля не кувыркается от столкновений
+        rb.isKinematic = true;                              // управляем вручную (через Cast + MovePosition)
         // Убираем трение и упругость, чтобы не было скольжения и «прыжка» физикой
         var col = GetComponent<Collider2D>();
         if (col != null)
@@ -33,62 +45,123 @@ public class Bullet : MonoBehaviour
             var mat = new PhysicsMaterial2D("BulletRuntime") { friction = 0f, bounciness = 0f };
             col.sharedMaterial = mat;
         }
+
+        // Подготовка фильтра: учитываем все слои, игнорируем триггеры
+        castFilter = new ContactFilter2D
+        {
+            useLayerMask = true,
+            layerMask = Physics2D.DefaultRaycastLayers,
+            useTriggers = false
+        };
     }
 
     public void Launch(Vector2 direction)
     {
-        rb.linearVelocity = direction.normalized * speed;               // задаём скорость пули
+        velocity = direction.normalized * speed;               // задаём скорость пули
+        if (velocity.sqrMagnitude > 0.000001f)
+            transform.up = velocity.normalized;                // ориентируем визуал по полёту
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void FixedUpdate()
     {
-        Vector2 normal = collision.contacts[0].normal;      // нормаль поверхности
-        Vector2 velocity = rb.linearVelocity;                           // текущая скорость
-
-        bool hit = HitResolver.Resolve(collision.collider, velocity, normal, damage, criticalAngle); // пробуем нанести урон
-        if (hit)                                           // цель поражена
-        {
-            Destroy(gameObject);                            // уничтожаем пулю
-            return;                                         // дальше не обрабатываем
-        }
-
-        // Семантика: разрешаем РОВНО maxRicochets отражений.
-        // Если лимит уже исчерпан — уничтожаем пулю на этом столкновении.
-        if (ricochetCount >= maxRicochets)                 // достигли лимита отражений ранее
-        {
-            Destroy(gameObject);                            // уничтожаем пулю без отражения
-            return;                                         // прекращаем метод
-        }
-
-        // Если поверхность не в маске рикошета — просто уничтожаем пулю
-        int hitLayer = collision.collider.gameObject.layer;
-        if ((ricochetMask.value & (1 << hitLayer)) == 0)
+        float dt = Time.fixedDeltaTime;
+        if (velocity.sqrMagnitude < 0.000001f)
         {
             Destroy(gameObject);
             return;
         }
 
-        Vector2 reflected = Vector2.Reflect(velocity, normal); // вычисляем отражённую скорость
-        // Гарантируем, что есть минимальная составляющая от поверхности (не скользим вдоль стены)
-        float mag = reflected.magnitude;
-        if (mag > 0.0001f)
+        float remaining = velocity.magnitude * dt;
+        Vector2 dir = velocity.normalized;
+
+        // Страховка от зацикливания в одном кадре
+        const int MaxCollisionsPerStep = 3;
+        for (int i = 0; i < MaxCollisionsPerStep && remaining > 0f; i++)
         {
-            Vector2 dir = reflected / mag;
-            float n = Vector2.Dot(dir, -normal); // компонента «от поверхности»
-            float minN = minExitNormalFraction;
-            if (n < minN)
+            int hitCount = rb.Cast(dir, castFilter, hits, remaining);
+            if (hitCount <= 0)
             {
-                dir = (dir + (-normal) * (minN - n)).normalized;
-                reflected = dir * mag;
+                // свободный полёт на остаток
+                rb.MovePosition(rb.position + dir * remaining);
+                break;
             }
+
+            // Берём самый близкий хит
+            int closestIndex = 0;
+            float closestDist = hits[0].distance;
+            for (int h = 1; h < hitCount; h++)
+            {
+                if (hits[h].distance < closestDist)
+                {
+                    closestDist = hits[h].distance;
+                    closestIndex = h;
+                }
+            }
+
+            var hit = hits[closestIndex];
+            Vector2 hitPoint = rb.position + dir * hit.distance;
+            Vector2 normal = hit.normal;
+            Collider2D other = hit.collider;
+
+            // Перемещаемся к точке удара с небольшим выходом из контакта
+            Vector2 postHitPos = hitPoint + normal * separation;
+            rb.MovePosition(postHitPos);
+
+            // Сначала пробуем нанести урон
+            bool damaged = HitResolver.Resolve(other, velocity, normal, damage, criticalAngle);
+            if (damaged)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            // Проверяем лимит рикошетов
+            if (ricochetCount >= maxRicochets)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            // Разрешён ли рикошет по слою
+            int hitLayer = other.gameObject.layer;
+            if ((ricochetMask.value & (1 << hitLayer)) == 0)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            // Считаем отражение
+            Vector2 reflected = Vector2.Reflect(velocity, normal);
+            if (debugDrawReflection)
+            {
+                Debug.DrawLine(hitPoint, hitPoint + reflected.normalized * debugRayLength, debugReflectionColor, debugRayDuration);
+            }
+            float mag = reflected.magnitude;
+            if (mag > 0.0001f)
+            {
+                Vector2 rdir = reflected / mag;
+                float n = Vector2.Dot(rdir, -normal);
+                float minN = minExitNormalFraction;
+                if (n < minN)
+                {
+                    rdir = (rdir + (-normal) * (minN - n)).normalized;
+                    reflected = rdir * mag;
+                }
+            }
+            reflected *= ricochetDamping;
+
+            velocity = reflected;
+            dir = velocity.normalized;
+            transform.up = dir;
+
+            ricochetCount++;
+
+            // Сколько пути осталось после удара (+ небольшой выход из контакта уже учли MovePosition)
+            remaining -= hit.distance;
+            remaining = Mathf.Max(0f, remaining);
         }
-        reflected *= ricochetDamping;                        // теряем часть скорости при рикошете
-        rb.linearVelocity = reflected;                               // задаём новую скорость
-        transform.up = reflected.normalized;                // поворачиваем визуал пули
-
-        // Небольшое смещение от поверхности, чтобы выйти из контакта и не «залипать»
-        rb.position = rb.position + normal * separation;
-
-        ricochetCount++;                                    // отражение состоялось — увеличиваем счётчик
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool ApproximatelyZero(float v) => Mathf.Abs(v) < 0.000001f;
 }

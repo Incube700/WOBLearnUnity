@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Централизованный обработчик ввода.
 /// </summary>
+[DefaultExecutionOrder(-1000)]
 public class GameInput : MonoBehaviour
 {
     public static GameInput Instance { get; private set; } // глобальный доступ
@@ -17,6 +18,7 @@ public class GameInput : MonoBehaviour
     private Vector2 move;             // текущий вектор движения
     private Vector2 aim;              // позиция курсора
     private bool firePressed;         // флаг выстрела в этом кадре
+    private bool fireHeld;            // флаг удержания кнопки
 
     private void Awake()
     {
@@ -46,7 +48,6 @@ public class GameInput : MonoBehaviour
         moveAction.Disable();                    // выключаем движение
         aimAction.Disable();                     // выключаем наведение
         fireAction.Disable();                    // выключаем выстрел
-        actions.Dispose();                       // освобождаем ресурсы набора
     }
 
     private void OnDestroy()
@@ -55,17 +56,24 @@ public class GameInput : MonoBehaviour
         {
             Instance = null;                    // сбрасываем ссылку на синглтон
         }
+        if (actions != null)
+        {
+            actions.Dispose();                   // освобождаем ресурсы набора
+            actions = null;
+        }
     }
 
     private void Update()
     {
         move = moveAction.ReadValue<Vector2>();  // читаем Vector2 с клавиатуры
         aim = aimAction.ReadValue<Vector2>();    // получаем позицию мыши
-        firePressed = fireAction.WasPressedThisFrame(); // фиксируем нажатие
+        firePressed = fireAction.WasPressedThisFrame(); // фиксируем нажатие (edge)
+        fireHeld = fireAction.IsPressed();              // удерживается ли кнопка
     }
 
     // Публичные геттеры для других скриптов
     public Vector2 Move => move;
     public Vector2 Aim => aim;
     public bool Fire => firePressed;
+    public bool FireHeld => fireHeld;
 }
