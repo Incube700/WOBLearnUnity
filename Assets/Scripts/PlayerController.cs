@@ -95,7 +95,7 @@ public class PlayerController : MonoBehaviour
                 float targetMax = desiredSign > 0f ? maxForwardSpeed : maxReverseSpeed; // предел скорости
                 float targetSpeed = throttle * targetMax; // желаемая скорость
                 currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, acceleration * dt); // разгон/замедление
-                rb.linearVelocity = forward * currentSpeed;     // задаём скорость вдоль корпуса
+                rb.linearVelocity = forward * currentSpeed;           // задаём скорость вдоль корпуса
             }
         }
         else                                               // газ отпущен
