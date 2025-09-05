@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 public class Bullet : MonoBehaviour
 {
-    [SerializeField] private float speed = 25f;            // скорость полёта (м/с)
+    [SerializeField] private float speed = 150f;            // скорость полёта (м/с)
     [SerializeField] private float damage = 1f;            // урон при попадании
     [SerializeField] private int maxRicochets = 3;         // сколько раз можно отскочить
     [SerializeField] private float radius = 0.1f;          // радиус круга для проверки столкновений
@@ -16,7 +16,7 @@ public class Bullet : MonoBehaviour
     private const int MaxRicochetIterations = 5;           // макс. итераций рикошета за кадр
     private const float SurfaceOffset = 0.001f;            // небольшой отступ от поверхности
     [SerializeField] private float spawnOffset = 0.1f;      // дополнительный вынос из дула при спауне
-    [SerializeField] private float spriteUpOffset = 0f;     // поправка ориентации спрайта (°): 0 — если спрайт смотрит вверх; -90 — если вправо
+    [SerializeField] private float spriteUpOffset = 90f;     // поправка ориентации спрайта (°): 0 — если спрайт смотрит вверх; -90 — если вправо
 
     private Vector2 direction;                             // текущее направление полёта
     private int ricochetCount;                             // число совершённых рикошетов

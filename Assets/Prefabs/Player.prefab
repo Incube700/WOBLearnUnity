@@ -235,7 +235,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 9211710572750386480, guid: 7a8ade7f5becb487a84bbc6b429b9bdd, type: 3}
   muzzle: {fileID: 7762801605266456442}
   fireCooldown: 0.25
-  useMuzzleRight: 1
+  useMuzzleRight: 0
 --- !u!1 &7360749722922612898
 GameObject:
   m_ObjectHideFlags: 0
