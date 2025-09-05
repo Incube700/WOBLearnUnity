@@ -1,33 +1,29 @@
 using UnityEngine;
 
 /// <summary>
-/// Обрабатывает попадание пули по цели и решает, был ли нанесён урон.
+/// Статический класс для обработки логики попадания пули.
 /// </summary>
 public static class HitResolver
 {
     /// <summary>
-    /// Возвращает true, если урон нанесён и пулю следует уничтожить (использует угол по умолчанию).
+    /// Обрабатывает столкновение пули с объектом.
     /// </summary>
-    public static bool Resolve(Collider2D target, Vector2 velocity, Vector2 surfaceNormal, float damage)
+    /// <returns>Возвращает true, если цель была пробита и урон нанесён.</returns>
+    public static bool Resolve(Collider2D hitCollider, Vector2 bulletVelocity, Vector2 surfaceNormal, float damage, float criticalAngle)
     {
-        return Resolve(target, velocity, surfaceNormal, damage, ArmorAngleResolver.DefaultCriticalAngle);
-    }
-
-    /// <summary>
-    /// Возвращает true, если урон нанесён и пулю следует уничтожить (с заданным критическим углом).
-    /// </summary>
-    public static bool Resolve(Collider2D target, Vector2 velocity, Vector2 surfaceNormal, float damage, float criticalAngle)
-    {
-        float angle = MathAngles.ImpactAngle(velocity, surfaceNormal); // вычисляем угол удара
-        bool canDamage = ArmorAngleResolver.CanPenetrate(angle, criticalAngle); // проверяем критический угол
-
-        Damageable dmg = target.GetComponentInParent<Damageable>();    // ищем компонент урона (на объекте или родителе)
-        if (dmg != null && canDamage)                                  // есть цель и угол подходящий
+        // Пытаемся найти на объекте компонент, который может принять урон
+        if (!hitCollider.TryGetComponent<IDamageable>(out var damageable))
         {
-            dmg.ApplyDamage(damage);                                   // наносим урон
-            return true;                                               // пулю нужно уничтожить
+            return false; // Объект не может получить урон, значит, будет рикошет
         }
 
-        return false;                                                  // рикошет
+        float impactAngle = MathAngles.ImpactAngle(bulletVelocity, surfaceNormal);
+
+        if (ArmorAngleResolver.CanPenetrate(impactAngle, criticalAngle))
+        {
+            damageable.TakeDamage(damage);
+            return true; // Броня пробита
+        }
+        return false; // Рикошет
     }
 }

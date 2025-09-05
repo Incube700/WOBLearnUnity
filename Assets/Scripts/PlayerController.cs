@@ -25,6 +25,11 @@ public class PlayerController : MonoBehaviour
     [Header("Ввод")]
     [SerializeField, Range(0f, 0.3f)] private float deadZone = 0.05f; // мёртвая зона джойстика
 
+    // Пороговые значения для улучшения читаемости
+    private const float BrakeSpeedThreshold = 0.01f;       // порог скорости для активации тормоза
+    private const float TurnInPlaceSpeedThreshold = 0.02f; // порог скорости для разворота на месте
+    private const float MinSpeedForTurnCalc = 0.001f;      // мин. скорость для расчёта поворота (избегаем деления на ноль)
+
     private Rigidbody2D rb;                                // кэш Rigidbody2D
     private float throttle;                                // ось газа −1..1
     private float steer;                                   // ось поворота −1..1
@@ -99,7 +104,7 @@ public class PlayerController : MonoBehaviour
             float desiredSign = Mathf.Sign(throttle);      // направление желаемого движения
 
             // Если едем задом, а жмём вперёд — сначала тормозим
-            if (Mathf.Sign(currentSpeed) != desiredSign && Mathf.Abs(currentSpeed) > 0.01f)
+            if (Mathf.Sign(currentSpeed) != desiredSign && Mathf.Abs(currentSpeed) > BrakeSpeedThreshold)
             {
                 rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, brakeDecel * dt); // плавное торможение
                 currentSpeed = Vector2.Dot(rb.linearVelocity, forward); // пересчитываем скаляр скорости
@@ -122,9 +127,9 @@ public class PlayerController : MonoBehaviour
         float angularSpeed = 0f;
         if (Mathf.Abs(steer) > 0f)                         // есть ввод поворота
         {
-            if (Mathf.Abs(currentSpeed) > 0.02f)           // едем — поворот зависит от скорости
+            if (Mathf.Abs(currentSpeed) > TurnInPlaceSpeedThreshold) // едем — поворот зависит от скорости
             {
-                float speed01 = Mathf.Clamp01(Mathf.Abs(currentSpeed) / Mathf.Max(0.001f, maxForwardSpeed)); // нормируем скорость
+                float speed01 = Mathf.Clamp01(Mathf.Abs(currentSpeed) / Mathf.Max(MinSpeedForTurnCalc, maxForwardSpeed)); // нормируем скорость
                 float turnAtSpeed = Mathf.Lerp(turnSpeedAtMax * minTurnFactor, turnSpeedAtMax, speed01);     // скорость поворота
                 angularSpeed = -steer * turnAtSpeed;       // инвертируем знак: A-влево, D-вправо
             }

@@ -9,7 +9,7 @@ public class GameInput : MonoBehaviour
 {
     public static GameInput Instance { get; private set; } // глобальный доступ
 
-    [SerializeField] private GameInputActions actions; // набор действий
+    private GameInputActions actions; // набор действий
 
     private InputAction moveAction;   // действие «двигаться»
     private InputAction aimAction;    // действие «наводить»

@@ -72,7 +72,7 @@ using UnityEngine.InputSystem.Utilities;
 /// }
 /// </code>
 /// </example>
-public partial class GameInputActions: IInputActionCollection2, IDisposable
+public partial class @GameInputActions: IInputActionCollection2, IDisposable
 {
     /// <summary>
     /// Provides access to the underlying asset instance.
@@ -82,7 +82,7 @@ public partial class GameInputActions: IInputActionCollection2, IDisposable
     /// <summary>
     /// Constructs a new instance.
     /// </summary>
-    public GameInputActions()
+    public @GameInputActions()
     {
         asset = InputActionAsset.FromJson(@"{
     ""version"": 1,
@@ -276,7 +276,7 @@ public partial class GameInputActions: IInputActionCollection2, IDisposable
         m_Gameplay_Move = m_Gameplay.FindAction("Move", throwIfNotFound: true);
     }
 
-    ~GameInputActions()
+    ~@GameInputActions()
     {
         UnityEngine.Debug.Assert(!m_Gameplay.enabled, "This will cause a leak and performance issues, GameInputActions.Gameplay.Disable() has not been called.");
     }
@@ -362,12 +362,12 @@ public partial class GameInputActions: IInputActionCollection2, IDisposable
     /// </summary>
     public struct GameplayActions
     {
-        private GameInputActions m_Wrapper;
+        private @GameInputActions m_Wrapper;
 
         /// <summary>
         /// Construct a new instance of the input action map wrapper class.
         /// </summary>
-        public GameplayActions(GameInputActions wrapper) { m_Wrapper = wrapper; }
+        public GameplayActions(@GameInputActions wrapper) { m_Wrapper = wrapper; }
         /// <summary>
         /// Provides access to the underlying input action "Gameplay/Fire".
         /// </summary>
