@@ -16,6 +16,7 @@ public class Bullet : MonoBehaviour
     private const int MaxRicochetIterations = 5;           // макс. итераций рикошета за кадр
     private const float SurfaceOffset = 0.001f;            // небольшой отступ от поверхности
     [SerializeField] private float spawnOffset = 0.1f;      // дополнительный вынос из дула при спауне
+    [SerializeField] private float spriteUpOffset = 0f;     // поправка ориентации спрайта (°): 0 — если спрайт смотрит вверх; -90 — если вправо
 
     private Vector2 direction;                             // текущее направление полёта
     private int ricochetCount;                             // число совершённых рикошетов
@@ -31,7 +32,8 @@ public class Bullet : MonoBehaviour
     public void Launch(Vector2 dir)
     {
         direction = dir.normalized;                        // нормализуем направление
-        transform.up = direction;                          // поворачиваем визуал пули
+        float baseAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, baseAngle + spriteUpOffset); // поворачиваем визуал с учётом офсета
         // небольшой вынос вперёд, чтобы не спауниться внутри дула/корпуса
         transform.position = (Vector2)transform.position + direction * (radius + SurfaceOffset + spawnOffset);
     }
@@ -87,7 +89,8 @@ public class Bullet : MonoBehaviour
 
             ricochetCount++;                               // фиксируем факт рикошета
             direction = Vector2.Reflect(direction, hit.normal).normalized; // отражаем направление
-            transform.up = direction;                      // обновляем ориентацию пули
+            float ang = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0f, 0f, ang + spriteUpOffset); // обновляем ориентацию пули
             distance -= hit.distance;                      // остаток пути в этом кадре
             if (drawDebug)
             {
