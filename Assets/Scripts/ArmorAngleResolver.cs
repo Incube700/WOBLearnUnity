@@ -5,13 +5,13 @@ using UnityEngine;
 /// </summary>
 public static class ArmorAngleResolver
 {
-    public const float DefaultCriticalAngle = 45f;          // минимальный угол для урона
+    public const float DefaultCriticalAngle = 45f;          // допустимый угол пробития (°)
 
     /// <summary>
-    /// Возвращает true, если угол превышает критический и можно наносить урон.
+    /// Возвращает true, если угол меньше критического и пуля пробивает броню.
     /// </summary>
     public static bool CanPenetrate(float impactAngle, float criticalAngle = DefaultCriticalAngle)
     {
-        return impactAngle > criticalAngle;                 // наносим урон при большом угле
+        return impactAngle < criticalAngle;                 // проникаем при меньшем угле
     }
 }
