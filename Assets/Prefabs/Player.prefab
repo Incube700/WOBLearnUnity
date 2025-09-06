@@ -24,13 +24,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2569039916697845259}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.02, y: 7.14, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7119384022539836482}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
 --- !u!1 &5519211062382866455
 GameObject:
   m_ObjectHideFlags: 0
@@ -208,17 +208,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 585c0ac5b5abe4d5a8928f81bfd363a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxForwardSpeed: 10
-  maxReverseSpeed: 4
-  acceleration: 8
+  maxForwardSpeed: 15
+  maxReverseSpeed: 6
+  acceleration: 10
   brakeDecel: 12
   idleDecel: 4
   turnSpeedAtMax: 120
   turnSpeedInPlace: 160
   minTurnFactor: 0.4
-  deadZone: 0.05
+  deadZone: 0.059
   drawFrontGizmo: 1
-  frontGizmoLength: 20
+  frontGizmoLength: 15
   frontGizmoColor: {r: 0.21306513, g: 0.7924528, b: 0.21306513, a: 1}
 --- !u!114 &2828770535871527334
 MonoBehaviour:
@@ -232,10 +232,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f80255e916baa4b4d8e945aa728e93d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bulletPrefab: {fileID: 9211710572750386480, guid: 7a8ade7f5becb487a84bbc6b429b9bdd, type: 3}
+  bulletPrefab: {fileID: 9183758696347221743, guid: 7a8ade7f5becb487a84bbc6b429b9bdd, type: 3}
   muzzle: {fileID: 7762801605266456442}
-  fireCooldown: 0.25
-  useMuzzleRight: 0
+  fireCooldown: 1
+  useMuzzleRight: 1
 --- !u!1 &7360749722922612898
 GameObject:
   m_ObjectHideFlags: 0
@@ -263,8 +263,8 @@ Transform:
   m_GameObject: {fileID: 7360749722922612898}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.32, y: -0.42, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -0.43, y: -0.43, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7762801605266456442}
@@ -313,7 +313,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_Sprite: {fileID: 2902199073803450404, guid: bbb9edafec176480d905291e993fc781, type: 3}
   m_Color: {r: 0.8301887, g: 0.8301887, b: 0.8301887, a: 1}
   m_FlipX: 0
