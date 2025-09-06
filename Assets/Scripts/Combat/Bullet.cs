@@ -73,7 +73,8 @@ public class Bullet : MonoBehaviour
                 continue;
             }
 
-            bool damaged = HitResolver.Resolve(hit.collider, direction * speed, hit.normal, damage, criticalAngle); // пытаемся нанести урон
+            // Используем расширенный метод для учета направления попадания и типа брони
+            bool damaged = HitResolver.ResolveAdvanced(hit.collider, direction * speed, hit.normal, damage, criticalAngle, transform); // пытаемся нанести урон
             if (damaged)                                   // цель пробита
             {
                 if (drawDebug) Debug.DrawRay(hit.point, hit.normal * 0.4f, Color.red, 0.1f);
