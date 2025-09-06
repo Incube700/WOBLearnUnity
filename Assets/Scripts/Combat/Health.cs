@@ -17,6 +17,21 @@ public class Health : MonoBehaviour, IDamageable
     [SerializeField] private bool hasTurret = true;   // есть ли у танка башня
 
     public float CurrentHealth => currentHealth;     // свойство для доступа к здоровью
+    
+    // Публичные свойства для UI/других систем
+    public float FrontArmor => frontArmor;
+    public float SideArmor => sideArmor;
+    public float RearArmor => rearArmor;
+    public float TurretArmor => turretArmor;
+    
+    // Максимальные значения (пока равны текущим — можно расширить логикой в будущем)
+    public float MaxFrontArmor => frontArmor;
+    public float MaxSideArmor => sideArmor;
+    public float MaxRearArmor => rearArmor;
+    public float MaxTurretArmor => turretArmor;
+
+    public delegate void DeathHandler(Health self);  // делегат события смерти
+    public event DeathHandler OnDeath;               // событие для внешних подписчиков
 
     private void Awake()
     {
@@ -54,7 +69,10 @@ public class Health : MonoBehaviour, IDamageable
         Debug.Log($"{gameObject.name} получил {damage} урона. Осталось здоровья: {currentHealth}"); // выводим лог
 
         if (currentHealth <= 0f)                     // проверяем смерть
+        {
+            OnDeath?.Invoke(this);                   // оповещаем о смерти
             Destroy(gameObject);                     // уничтожаем объект при нуле здоровья
+        }
     }
 
     public delegate void DamageTakenHandler(float damage); // делегат события получения урона
@@ -78,5 +96,32 @@ public class Health : MonoBehaviour, IDamageable
 
         Debug.Log($"Попадание: угол {impactAngle:F1}°, броня {armorValue:F1}, урон {damage:F1} → {finalDamage:F1}"); // подробный лог
     }
-}
 
+    /// <summary>
+    /// Повышает параметры брони указанного типа на заданную величину.
+    /// </summary>
+    /// <param name="armorType">0: Front, 1: Side, 2: Rear, 3: Turret</param>
+    /// <param name="amount">Добавка к толщине брони</param>
+    public void UpgradeArmor(int armorType, float amount)
+    {
+        switch (armorType)
+        {
+            case 0: // Front
+                frontArmor += amount;
+                break;
+            case 1: // Side
+                sideArmor += amount;
+                break;
+            case 2: // Rear
+                rearArmor += amount;
+                break;
+            case 3: // Turret
+                if (hasTurret)
+                    turretArmor += amount;
+                break;
+            default:
+                Debug.LogWarning($"Неизвестный тип брони: {armorType}", this);
+                break;
+        }
+    }
+}

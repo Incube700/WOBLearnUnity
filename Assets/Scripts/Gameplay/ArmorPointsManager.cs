@@ -24,11 +24,13 @@ public class ArmorPointsManager : MonoBehaviour
             return;
         }
         
-        // Подписываемся на события уничтожения противников
-        EnemyHealth[] enemies = FindObjectsOfType<EnemyHealth>();
-        foreach (var enemy in enemies)
+        // Подписываемся на события уничтожения противников (Health на врагах)
+        Health[] healthComponents = FindObjectsOfType<Health>();
+        foreach (var h in healthComponents)
         {
-            enemy.OnDeath += OnEnemyKilled;
+            // Игнорируем игрока
+            if (h.GetComponent<PlayerController>() != null) continue;
+            h.OnDeath += OnEnemyKilled;
         }
         
         // Подписываемся на события завершения волны, если есть система волн
@@ -42,10 +44,11 @@ public class ArmorPointsManager : MonoBehaviour
     private void OnDestroy()
     {
         // Отписываемся от событий при уничтожении объекта
-        EnemyHealth[] enemies = FindObjectsOfType<EnemyHealth>();
-        foreach (var enemy in enemies)
+        Health[] healthComponents = FindObjectsOfType<Health>();
+        foreach (var h in healthComponents)
         {
-            enemy.OnDeath -= OnEnemyKilled;
+            if (h.GetComponent<PlayerController>() != null) continue;
+            h.OnDeath -= OnEnemyKilled;
         }
         
         WaveManager waveManager = FindObjectOfType<WaveManager>();
@@ -58,7 +61,7 @@ public class ArmorPointsManager : MonoBehaviour
     /// <summary>
     /// Вызывается при уничтожении противника.
     /// </summary>
-    private void OnEnemyKilled(EnemyHealth enemy)
+    private void OnEnemyKilled(Health enemy)
     {
         if (playerArmorUpgrade == null) return;
         

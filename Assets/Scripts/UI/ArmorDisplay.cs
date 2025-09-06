@@ -7,10 +7,10 @@ using UnityEngine.UI;
 public class ArmorDisplay : MonoBehaviour
 {
     [Header("Armor Indicators")]
-    [SerializeField] private Image frontArmorIndicator;
-    [SerializeField] private Image sideArmorIndicator;
-    [SerializeField] private Image rearArmorIndicator;
-    [SerializeField] private Image turretArmorIndicator;
+    [SerializeField] public Image frontArmorIndicator;
+    [SerializeField] public Image sideArmorIndicator;
+    [SerializeField] public Image rearArmorIndicator;
+    [SerializeField] public Image turretArmorIndicator;
     
     [Header("Colors")]
     [SerializeField] private Color fullArmorColor = Color.green;

@@ -218,8 +218,8 @@ MonoBehaviour:
   minTurnFactor: 0.4
   deadZone: 0.05
   drawFrontGizmo: 1
-  frontGizmoLength: 0.6
-  frontGizmoColor: {r: 0, g: 1, b: 0, a: 1}
+  frontGizmoLength: 20
+  frontGizmoColor: {r: 0.21306513, g: 0.7924528, b: 0.21306513, a: 1}
 --- !u!114 &2828770535871527334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -313,7 +313,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 2
   m_Sprite: {fileID: 2902199073803450404, guid: bbb9edafec176480d905291e993fc781, type: 3}
   m_Color: {r: 0.8301887, g: 0.8301887, b: 0.8301887, a: 1}
   m_FlipX: 0
