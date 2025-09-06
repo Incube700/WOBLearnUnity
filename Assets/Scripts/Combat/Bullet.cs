@@ -7,11 +7,11 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     [SerializeField] private float speed = 150f;            // скорость полёта (м/с)
-    [SerializeField] private float damage = 1f;            // урон при попадании
+    [SerializeField] private float damage = 76f;           // базовый урон снаряда
     [SerializeField] private int maxRicochets = 3;         // сколько раз можно отскочить
     [SerializeField] private float radius = 0.1f;          // радиус круга для проверки столкновений
     [SerializeField] private LayerMask hitMask = ~0;       // слои, по которым летит пуля
-    [SerializeField] private float criticalAngle = ArmorAngleResolver.DefaultCriticalAngle; // угол пробития (°)
+    [SerializeField] private float criticalAngle = ArmorAngleResolver.DefaultCriticalAngle; // максимальный угол пробития (°)
 
     private const int MaxRicochetIterations = 5;           // макс. итераций рикошета за кадр
     private const float SurfaceOffset = 0.001f;            // небольшой отступ от поверхности
