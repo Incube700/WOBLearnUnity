@@ -1,53 +1,41 @@
 using UnityEngine;
 
-/// <summary>
-/// Простая пуля с ручным подсчётом рикошетов и угла брони.
-/// </summary>
-[RequireComponent(typeof(Rigidbody2D))] // гарантируем наличие Rigidbody2D
 public class Bullet : MonoBehaviour
 {
-    [Header("Параметры полёта")]
-    [SerializeField] private float speed = 12f;           // скорость пули (м/с)
-    [SerializeField] private float damage = 40f;          // урон при пробитии
-    [SerializeField] private int maxCollisions = 4;       // исчезает после 4-го столкновения
+    [SerializeField] private float speed = 12f; // скорость пули
+    [SerializeField] private int damage = 1; // урон за попадание
+    [SerializeField] private int maxRicochets = 3; // количество возможных рикошетов
 
-    private Rigidbody2D rb;                               // кэш Rigidbody2D
-    private int collisionCount = 0;                       // сколько столкновений уже было
+    private Vector2 _direction; // направление полёта
+    private Rigidbody2D _rb; // ссылка на Rigidbody2D
+    private int _ricochetCount; // число уже совершённых рикошетов
 
     private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();                 // получаем Rigidbody2D
-        rb.gravityScale = 0f;                             // топ-даун — без гравитации
-        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; // точные столкновения
-        rb.velocity = transform.up.normalized * speed;    // стартовая скорость вдоль up
+        _rb = GetComponent<Rigidbody2D>(); // кэшируем Rigidbody2D
     }
 
-    private void FixedUpdate()
+    public void Init(Vector2 direction)
     {
-        rb.velocity = rb.velocity.normalized * speed;     // поддерживаем постоянную скорость
+        _direction = direction.normalized; // нормализуем направление
+        _rb.velocity = _direction * speed; // задаём начальную скорость
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        collisionCount++;                                 // считаем столкновения
-        Vector2 normal = collision.GetContact(0).normal;  // нормаль поверхности
-        float angle = MathAngles.ImpactAngle(rb.velocity, normal); // угол между пулей и нормалью
-
-        if (angle > 45f)                                  // угол больше 45° — наносим урон
+        Vector2 normal = collision.GetContact(0).normal; // нормаль поверхности в точке удара
+        float angle = Vector2.Angle(-_direction, normal); // угол между пулей и нормалью
+        if (angle > 45f) // если угол больше 45°
         {
-            DamageReceiver2D receiver = collision.collider.GetComponentInParent<DamageReceiver2D>(); // ищем получателя урона
-            if (receiver != null) receiver.ApplyDamage(damage); // передаём урон
-            Destroy(gameObject);                          // удаляем пулю после попадания
-            return;                                       // дальнейшая обработка не нужна
+            collision.collider.GetComponent<Health>()?.ApplyDamage(damage); // наносим урон цели
+            Destroy(gameObject); // уничтожаем пулю
+            return; // выходим, чтобы не отражаться
         }
 
-        if (collisionCount >= maxCollisions)              // достигнут лимит столкновений
-        {
-            Destroy(gameObject);                          // уничтожаем пулю
-            return;                                       // прекращаем обработку
-        }
-
-        Vector2 reflected = Vector2.Reflect(rb.velocity.normalized, normal); // отражаем направление
-        rb.velocity = reflected * speed;                  // задаём новую скорость после рикошета
+        _direction = Vector2.Reflect(_direction, normal); // отражаем направление от нормали
+        _rb.velocity = _direction * speed; // применяем новую скорость
+        _ricochetCount++; // увеличиваем число рикошетов
+        if (_ricochetCount > maxRicochets) Destroy(gameObject); // удаляем пулю после лимита рикошетов
     }
 }
+

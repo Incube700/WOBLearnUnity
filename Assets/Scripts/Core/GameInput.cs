@@ -1,79 +1,28 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Централизованный обработчик ввода.
-/// </summary>
-[DefaultExecutionOrder(-1000)]
 public class GameInput : MonoBehaviour
 {
-    public static GameInput Instance { get; private set; } // глобальный доступ
+    public static GameInput Instance { get; private set; } // глобальный доступ к вводу
 
-    private GameInputActions actions; // набор действий
-
-    private InputAction moveAction;   // действие «двигаться»
-    private InputAction aimAction;    // действие «наводить»
-    private InputAction fireAction;   // действие «стрелять»
-
-    private Vector2 move;             // текущий вектор движения
-    private Vector2 aim;              // позиция курсора
-    private bool firePressed;         // флаг выстрела в этом кадре
-    private bool fireHeld;            // флаг удержания кнопки
+    private GameInputActions _actions; // набор действий Input System
 
     private void Awake()
     {
-        if (Instance != null)         // проверяем, что синглтон один
+        if (Instance != null && Instance != this) // защищаемся от второго экземпляра
         {
-            Destroy(gameObject);      // уничтожаем дубликат
-            return;
+            Destroy(gameObject); // уничтожаем дубликат
+            return; // выходим, чтобы не продолжать инициализацию
         }
-        Instance = this;
-        DontDestroyOnLoad(gameObject); // не уничтожаем при смене сцены
-
-        actions = new GameInputActions();        // создаём экземпляр набора
-        moveAction = actions.Gameplay.Move;      // получаем действие Move
-        aimAction = actions.Gameplay.Aim;        // получаем действие Aim
-        fireAction = actions.Gameplay.Fire;      // получаем действие Fire
+        Instance = this; // сохраняем ссылку на себя
+        _actions = new GameInputActions(); // создаём экземпляр действий
+        _actions.Enable(); // активируем все действия
     }
 
-    private void OnEnable()
-    {
-        moveAction.Enable();                     // начинаем читать движение
-        aimAction.Enable();                      // начинаем читать наведение
-        fireAction.Enable();                     // начинаем читать выстрел
-    }
+    public Vector2 Move => _actions.Player.Move.ReadValue<Vector2>(); // оси движения
 
-    private void OnDisable()
-    {
-        moveAction.Disable();                    // выключаем движение
-        aimAction.Disable();                     // выключаем наведение
-        fireAction.Disable();                    // выключаем выстрел
-    }
+    public bool FirePressed => _actions.Player.Fire.triggered; // выстрел в этот кадр
 
-    private void OnDestroy()
-    {
-        if (Instance == this)                    // убеждаемся, что уничтожаем свой экземпляр
-        {
-            Instance = null;                    // сбрасываем ссылку на синглтон
-        }
-        if (actions != null)
-        {
-            actions.Dispose();                   // освобождаем ресурсы набора
-            actions = null;
-        }
-    }
-
-    private void Update()
-    {
-        move = moveAction.ReadValue<Vector2>();  // читаем Vector2 с клавиатуры
-        aim = aimAction.ReadValue<Vector2>();    // получаем позицию мыши
-        firePressed = fireAction.WasPressedThisFrame(); // фиксируем нажатие (edge)
-        fireHeld = fireAction.IsPressed();              // удерживается ли кнопка
-    }
-
-    // Публичные геттеры для других скриптов
-    public Vector2 Move => move;
-    public Vector2 Aim => aim;
-    public bool Fire => firePressed;
-    public bool FireHeld => fireHeld;
+    public Vector2 PointerScreen => Mouse.current.position.ReadValue(); // позиция курсора на экране
 }
+
