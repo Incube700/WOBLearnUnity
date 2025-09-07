@@ -47,8 +47,7 @@ Unity и C# — мой учебный плацдарм.
 - В `Armor2D.noseReference` указать Transform «нос» (если не задан — используется `transform.up`).
 - Толщины MM: пример — FRONT=90, SIDE=70, REAR=50.
 - На стены/препятствия можно не вешать `Armor2D`: будет 30 мм по умолчанию.
-- Пуля — префаб с `Bullet2D`, `Rigidbody2D(Kinematic)`, небольшим `CircleCollider2D`. Ось up — вперёд.
-- `LayerMask` в `Bullet2D.hitMask` должен включать слои цели и мира.
+- Пуля — префаб с `Bullet`, `Rigidbody2D(Kinematic)` и `CircleCollider2D`. Ось up — вперёд.
 - В «Деталях» консоли выводятся: угол/нормализация/порог/оверматч/эффективная броня/пенетра/счётчик рикошетов/итог.
 
 ---

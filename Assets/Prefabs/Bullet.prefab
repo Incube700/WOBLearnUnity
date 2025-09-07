@@ -135,17 +135,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6532009fae97c4871a0cbfd4e6914c3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speedMps: 100
-  minSpeedMps: 10
-  hitMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  shellType: 0
-  caliberMM: 75
-  damage: 160
-  penAt100m: 120
-  penLossPer100m: 15
-  maxRicochets: 3
-  maxLifeTime: 8
+  m_Name:
+  m_EditorClassIdentifier:
+  speed: 12
+  damage: 40
+  maxCollisions: 4
