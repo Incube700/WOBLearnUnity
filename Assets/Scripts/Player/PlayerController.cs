@@ -106,8 +106,8 @@ public class PlayerController : MonoBehaviour
             // Если едем задом, а жмём вперёд — сначала тормозим
             if (Mathf.Sign(currentSpeed) != desiredSign && Mathf.Abs(currentSpeed) > BrakeSpeedThreshold)
             {
-                rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, brakeDecel * dt); // плавное торможение
-                currentSpeed = Vector2.Dot(rb.linearVelocity, forward); // пересчитываем скаляр скорости
+            rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, brakeDecel * dt); // плавное торможение
+            currentSpeed = Vector2.Dot(rb.linearVelocity, forward); // пересчитываем скаляр скорости
             }
             else
             {

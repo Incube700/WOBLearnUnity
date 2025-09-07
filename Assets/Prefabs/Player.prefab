@@ -24,13 +24,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2569039916697845259}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7119384022539836482}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90}
 --- !u!1 &5519211062382866455
 GameObject:
   m_ObjectHideFlags: 0
@@ -45,6 +45,9 @@ GameObject:
   - component: {fileID: 8365833724527228599}
   - component: {fileID: 5917295813084254829}
   - component: {fileID: 2828770535871527334}
+  - component: {fileID: 770770770770770770}
+  - component: {fileID: 880880880880880881}
+  - component: {fileID: 660660660660660660}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -232,10 +235,59 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f80255e916baa4b4d8e945aa728e93d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bulletPrefab: {fileID: 9183758696347221743, guid: 7a8ade7f5becb487a84bbc6b429b9bdd, type: 3}
+  bullet2DPrefab: {fileID: 5382745484504245196, guid: 7a8ade7f5becb487a84bbc6b429b9bdd, type: 3}
   muzzle: {fileID: 7762801605266456442}
   fireCooldown: 1
   useMuzzleRight: 1
+--- !u!114 &770770770770770770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5519211062382866455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9e4991ae28ac4a94bc35c4fbd73ea1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetHP: {fileID: 0}
+--- !u!114 &880880880880880881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5519211062382866455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96199282a451e4c0d89d77e8b480891f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  frontArmorMM: 90
+  sideArmorMM: 70
+  rearArmorMM: 50
+  frontHalfAngle: 45
+  sideHalfAngle: 120
+  noseReference: {fileID: 0}
+--- !u!114 &660660660660660660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5519211062382866455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34b37669c66cc494c839f90386b95832, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 1000
+  frontArmor: 90
+  sideArmor: 70
+  rearArmor: 50
+  turretArmor: 20
+  hasTurret: 1
 --- !u!1 &7360749722922612898
 GameObject:
   m_ObjectHideFlags: 0

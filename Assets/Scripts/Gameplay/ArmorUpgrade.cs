@@ -26,19 +26,21 @@ public class ArmorUpgrade : MonoBehaviour
     private int rearArmorLevel = 0;
     private int turretArmorLevel = 0;
     
-    // Ссылка на компонент здоровья игрока
-    private Health playerHealth;
+    // Ссылки на броню/здоровье игрока
+    private Armor2D playerArmor2D;
+    private Health playerHealth; // для совместимости UI
     
     // Игровая валюта (очки, деньги и т.д.)
     private int currency = 0;
     
     private void Start()
     {
-        // Находим компонент здоровья игрока
+        // Находим компоненты игрока
+        playerArmor2D = GetComponent<Armor2D>();
         playerHealth = GetComponent<Health>();
-        if (playerHealth == null)
+        if (playerArmor2D == null && playerHealth == null)
         {
-            Debug.LogError("ArmorUpgrade: не найден компонент Health на том же объекте", this);
+            Debug.LogError("ArmorUpgrade: не найдены Armor2D/Health на объекте", this);
         }
     }
     
@@ -100,7 +102,7 @@ public class ArmorUpgrade : MonoBehaviour
     /// </summary>
     private bool UpgradeArmor(ref int level, int cost, float amount, ArmorType type)
     {
-        if (playerHealth == null) return false;
+        if (playerArmor2D == null && playerHealth == null) return false;
         
         // Проверяем, не достигнут ли максимальный уровень
         if (level >= maxUpgradeLevel)
@@ -135,10 +137,23 @@ public class ArmorUpgrade : MonoBehaviour
     /// </summary>
     private void ApplyArmorUpgrade(ArmorType type, float amount)
     {
-        if (playerHealth == null) return;
-        
-        // Вызываем метод улучшения брони в компоненте Health
-        playerHealth.UpgradeArmor((int)type, amount);
+        // 1) Новая система: увеличиваем мм в Armor2D
+        if (playerArmor2D != null)
+        {
+            switch (type)
+            {
+                case ArmorType.Front: playerArmor2D.AddArmor(ArmorArc2D.Front, amount); break;
+                case ArmorType.Side:  playerArmor2D.AddArmor(ArmorArc2D.Side,  amount); break;
+                case ArmorType.Rear:  playerArmor2D.AddArmor(ArmorArc2D.Rear,  amount); break;
+                case ArmorType.Turret: /* не используется в 2D-солвере */ break;
+            }
+        }
+
+        // 2) Совместимость со старым UI: обновляем Health, если присутствует
+        if (playerHealth != null)
+        {
+            playerHealth.UpgradeArmor((int)type, amount);
+        }
     }
     
     /// <summary>

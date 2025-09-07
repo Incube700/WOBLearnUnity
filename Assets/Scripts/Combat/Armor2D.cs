@@ -20,6 +20,24 @@ public class Armor2D : MonoBehaviour
     private ArmorArc2D lastHitArc = ArmorArc2D.Rear; // последний сектор попадания
     private ArmorHitResult2D lastHitResult = ArmorHitResult2D.None; // исход последнего попадания
 
+    // Публичные геттеры для UI/систем
+    public float FrontArmorMM => frontArmorMM;
+    public float SideArmorMM => sideArmorMM;
+    public float RearArmorMM => rearArmorMM;
+
+    /// <summary>
+    /// Увеличивает толщину брони указанного сектора.
+    /// </summary>
+    public void AddArmor(ArmorArc2D arc, float amount)
+    {
+        switch (arc)
+        {
+            case ArmorArc2D.Front: frontArmorMM = Mathf.Max(0f, frontArmorMM + amount); break;
+            case ArmorArc2D.Side:  sideArmorMM  = Mathf.Max(0f, sideArmorMM  + amount); break;
+            case ArmorArc2D.Rear:  rearArmorMM  = Mathf.Max(0f, rearArmorMM  + amount); break;
+        }
+    }
+
     private Vector2 GetNoseForward2D()
     {
         if (noseReference != null) return (Vector2)noseReference.up; // явный нос
@@ -126,4 +144,3 @@ public enum ArmorArc2D { Front, Side, Rear }
 
 /// <summary>Исход последнего попадания.</summary>
 public enum ArmorHitResult2D { None, Penetration, NoPenetration, Ricochet }
-

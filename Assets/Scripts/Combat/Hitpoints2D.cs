@@ -8,6 +8,8 @@ public class Hitpoints2D : MonoBehaviour
     [SerializeField] private float maxHP = 1000f; // максимальное здоровье
     private float hp; // текущее здоровье
 
+    public event System.Action<Hitpoints2D> OnDeath; // событие смерти для систем очков/логики
+
     private void Awake() { hp = maxHP; } // при старте устанавливаем здоровье
 
     public void ApplyDamage(float dmg)
@@ -18,6 +20,7 @@ public class Hitpoints2D : MonoBehaviour
 
     private void Die()
     {
+        OnDeath?.Invoke(this);
         Destroy(gameObject); // уничтожаем объект
     }
 }

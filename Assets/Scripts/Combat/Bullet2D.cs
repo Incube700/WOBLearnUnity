@@ -31,6 +31,10 @@ public class Bullet2D : MonoBehaviour
     private float distanceTraveled = 0f; // пройденная дистанция
     private Vector2 prevPos;           // предыдущая позиция для линий
 
+    [Header("Игнорировать владельца")]
+    public Transform ownerRoot;        // корень владельца, чьи коллайдеры игнорируются
+    public void SetOwner(Transform root) { ownerRoot = root; }
+
     private void Awake()
     {
         velocity = transform.up.normalized * speedMps; // начальная скорость вдоль up
@@ -47,7 +51,21 @@ public class Bullet2D : MonoBehaviour
 
         RaycastHit2D hit = Physics2D.Raycast(curPos, step.normalized, step.magnitude, hitMask); // ищем столкновение
 
-        if (hit.collider != null)
+        // Игнорируем попадание по владельцу — просто летим вперёд
+        if (hit.collider != null && ownerRoot != null && (hit.collider.transform == ownerRoot || hit.collider.transform.IsChildOf(ownerRoot)))
+        {
+            Vector2 nextPos = curPos + step; // новая позиция
+            Debug.DrawLine(curPos, nextPos, Color.green, 2f);
+            transform.position = nextPos;
+        }
+        // Если попали в другую пулю — игнорируем и просто летим дальше
+        else if (hit.collider != null && hit.collider.GetComponentInParent<Bullet2D>() != null)
+        {
+            Vector2 nextPos = curPos + step; // новая позиция
+            Debug.DrawLine(curPos, nextPos, Color.green, 2f);
+            transform.position = nextPos;
+        }
+        else if (hit.collider != null)
         {
             Vector2 hitPoint = hit.point - step.normalized * 0.01f; // чуть отступаем
             Debug.DrawLine(curPos, hitPoint, Color.green, 2f); // зелёный путь до контакта
@@ -115,8 +133,12 @@ public class Bullet2D : MonoBehaviour
             {
                 if (res.penetrated && res.damageApplied > 0f)
                 {
-                    var hp = hit.collider.GetComponentInParent<Hitpoints2D>();
-                    if (hp != null) hp.ApplyDamage(res.damageApplied); // наносим урон
+                    // Наносим урон ТОЛЬКО если в иерархии есть маркер DamageReceiver2D (например, на корпусе)
+                    var receiver = hit.collider.GetComponentInParent<DamageReceiver2D>();
+                    if (receiver != null)
+                    {
+                        receiver.ApplyDamage(res.damageApplied);
+                    }
                 }
 
                 Destroy(gameObject); // пуля больше не нужна

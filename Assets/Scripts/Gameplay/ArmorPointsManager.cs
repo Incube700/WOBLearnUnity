@@ -24,13 +24,16 @@ public class ArmorPointsManager : MonoBehaviour
             return;
         }
         
-        // Подписываемся на события уничтожения противников (Health на врагах)
-        Health[] healthComponents = FindObjectsOfType<Health>();
-        foreach (var h in healthComponents)
+        // Подписываемся на события уничтожения противников (Health/Hitpoints2D на врагах)
+        foreach (var h in FindObjectsOfType<Health>())
         {
-            // Игнорируем игрока
-            if (h.GetComponent<PlayerController>() != null) continue;
+            if (h.GetComponent<PlayerController>() != null) continue; // игнорируем игрока
             h.OnDeath += OnEnemyKilled;
+        }
+        foreach (var hp in FindObjectsOfType<Hitpoints2D>())
+        {
+            if (hp.GetComponent<PlayerController>() != null) continue; // игнорируем игрока
+            hp.OnDeath += OnEnemyKilled2D;
         }
         
         // Подписываемся на события завершения волны, если есть система волн
@@ -44,11 +47,15 @@ public class ArmorPointsManager : MonoBehaviour
     private void OnDestroy()
     {
         // Отписываемся от событий при уничтожении объекта
-        Health[] healthComponents = FindObjectsOfType<Health>();
-        foreach (var h in healthComponents)
+        foreach (var h in FindObjectsOfType<Health>())
         {
             if (h.GetComponent<PlayerController>() != null) continue;
             h.OnDeath -= OnEnemyKilled;
+        }
+        foreach (var hp in FindObjectsOfType<Hitpoints2D>())
+        {
+            if (hp.GetComponent<PlayerController>() != null) continue;
+            hp.OnDeath -= OnEnemyKilled2D;
         }
         
         WaveManager waveManager = FindObjectOfType<WaveManager>();
@@ -66,7 +73,8 @@ public class ArmorPointsManager : MonoBehaviour
         if (playerArmorUpgrade == null) return;
         
         // Проверяем, является ли противник боссом
-        bool isBoss = enemy.CompareTag("Boss");
+        // Избегаем CompareTag, если тег не заведен — используем безопасное сравнение строки
+        bool isBoss = enemy != null && enemy.tag == "Boss";
         
         // Добавляем очки в зависимости от типа противника
         int pointsToAdd = isBoss ? pointsPerBossKill : pointsPerEnemyKill;
@@ -75,6 +83,18 @@ public class ArmorPointsManager : MonoBehaviour
         playerArmorUpgrade.AddCurrency(pointsToAdd);
         
         // Показываем уведомление о полученных очках
+        ShowPointsNotification(pointsToAdd);
+    }
+
+    /// <summary>
+    /// Обработчик уничтожения противника с Hitpoints2D.
+    /// </summary>
+    private void OnEnemyKilled2D(Hitpoints2D enemy)
+    {
+        if (playerArmorUpgrade == null) return;
+        bool isBoss = enemy != null && enemy.tag == "Boss";
+        int pointsToAdd = isBoss ? pointsPerBossKill : pointsPerEnemyKill;
+        playerArmorUpgrade.AddCurrency(pointsToAdd);
         ShowPointsNotification(pointsToAdd);
     }
     

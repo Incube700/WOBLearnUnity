@@ -7,7 +7,7 @@ using UnityEngine;
 public class PlayerShooter : MonoBehaviour
 {
     private static int lastShotFrame = -1;                  // защита от мультиспавна в один кадр
-    [SerializeField] private Bullet bulletPrefab;           // префаб пули
+    [SerializeField] private GameObject bullet2DPrefab;     // префаб пули (Bullet2D)
     [SerializeField] private Transform muzzle;              // точка вылета
     [SerializeField] private float fireCooldown = 0.25f;    // время между выстрелами (с)
     [SerializeField] private bool useMuzzleRight = false;   // стрелять вдоль локальной оси Y (вперёд по стволу)
@@ -20,8 +20,8 @@ public class PlayerShooter : MonoBehaviour
     {
         if (!Application.isPlaying)
         {
-            if (bulletPrefab == null)
-                EnsureBulletPrefab();
+            if (bullet2DPrefab == null)
+                EnsureBullet2DPrefab();
 
             if (muzzle == null)
             {
@@ -32,22 +32,14 @@ public class PlayerShooter : MonoBehaviour
     }
 #endif
 
-    private bool EnsureBulletPrefab()
+    private bool EnsureBullet2DPrefab()
     {
-        if (bulletPrefab != null) return true;
-        // Повторная попытка автозагрузки
-        Bullet loadedComp = Resources.Load<Bullet>("Prefabs/Bullet");
-        if (loadedComp == null)
-            loadedComp = Resources.Load<Bullet>("Bullet");
-        if (loadedComp == null)
+        if (bullet2DPrefab != null) return true;
+        GameObject go = Resources.Load<GameObject>("Prefabs/Bullet");
+        if (go == null) go = Resources.Load<GameObject>("Bullet");
+        if (go != null && go.GetComponent<Bullet2D>() != null)
         {
-            GameObject go = Resources.Load<GameObject>("Prefabs/Bullet");
-            if (go == null) go = Resources.Load<GameObject>("Bullet");
-            if (go != null) loadedComp = go.GetComponent<Bullet>();
-        }
-        if (loadedComp != null)
-        {
-            bulletPrefab = loadedComp;
+            bullet2DPrefab = go;
             return true;
         }
         return false;
@@ -56,8 +48,8 @@ public class PlayerShooter : MonoBehaviour
     private void Awake()
     {
         // Автозагрузка префаба пули, если не назначен (через Resources)
-        if (bulletPrefab == null)
-            EnsureBulletPrefab();
+        if (bullet2DPrefab == null)
+            EnsureBullet2DPrefab();
 
         // Автопоиск точки вылета, если не назначена
         if (muzzle == null)
@@ -114,24 +106,24 @@ public class PlayerShooter : MonoBehaviour
         // Глобальная защита от дубликатов в этот же кадр (если компонент продублирован)
         if (Time.frameCount == lastShotFrame)
             return;
-        if ((bulletPrefab == null && !EnsureBulletPrefab()) || muzzle == null) // проверяем ссылки и пытаемся подхватить
+        if ((bullet2DPrefab == null && !EnsureBullet2DPrefab()) || muzzle == null) // проверяем ссылки и пытаемся подхватить
         {
-            if (bulletPrefab == null && muzzle == null)
+            if (bullet2DPrefab == null && muzzle == null)
                 Debug.LogError("PlayerShooter: отсутствуют bulletPrefab и muzzle — назначьте их в инспекторе", this);
-            else if (bulletPrefab == null)
+            else if (bullet2DPrefab == null)
                 Debug.LogError("PlayerShooter: отсутствует bulletPrefab — назначьте префаб пули в инспекторе", this);
             else
                 Debug.LogError("PlayerShooter: отсутствует muzzle — назначьте точку вылета (Transform)", this);
             return;
         }
 
-        Bullet bullet = Instantiate(bulletPrefab, muzzle.position, muzzle.rotation); // создаём пулю
-        Vector2 dir = useMuzzleRight ? (Vector2)muzzle.right : (Vector2)muzzle.up; // ось выстрела
-        var ownerCol = GetComponent<Collider2D>();         // коллайдер владельца для игнора
-        if (ownerCol != null)
-            bullet.Launch(dir, ownerCol);
-        else
-            bullet.Launch(dir);
+        // Bullet2D ориентируется по up, при необходимости стреляем вдоль right
+        Quaternion rot = muzzle.rotation;
+        if (useMuzzleRight) rot *= Quaternion.Euler(0f, 0f, -90f);
+        Vector3 spawnPos = muzzle.position + (useMuzzleRight ? muzzle.right : muzzle.up) * 0.2f;
+        var go = Instantiate(bullet2DPrefab, spawnPos, rot);
+        var b = go.GetComponent<Bullet2D>();
+        if (b != null) b.SetOwner(transform);
 
         lastShotFrame = Time.frameCount;                   // фиксируем кадр выстрела
     }
