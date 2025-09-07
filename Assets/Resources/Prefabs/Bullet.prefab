@@ -144,9 +144,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   shellType: 0
   caliberMM: 75
-  damage: 50
+  damage: 160
   penAt100m: 120
   penLossPer100m: 15
   maxRicochets: 3
   maxLifeTime: 8
-  ownerRoot: {fileID: 0}

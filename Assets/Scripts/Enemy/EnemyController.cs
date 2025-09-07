@@ -14,7 +14,7 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float maxDistance = 11f;      // дальше приближаемся
 
     [Header("Стрельба (новая система)")]
-    [SerializeField] private GameObject bullet2DPrefab;   // префаб пули с Bullet2D
+    [SerializeField] private GameObject bulletPrefab;   // префаб пули
     [SerializeField] private Transform muzzle;            // точка вылета
     [SerializeField] private float fireCooldown = 1f;     // задержка между выстрелами (с)
     [SerializeField] private float fireDistance = 8f;     // дистанция, с которой открываем огонь (м)
@@ -58,11 +58,11 @@ public class EnemyController : MonoBehaviour
         EnsureTurretPivot();
 
         // Автозагрузка префаба пули, если не назначен (через Resources/Prefabs/Bullet)
-        if (bullet2DPrefab == null)
+        if (bulletPrefab == null)
         {
-            bullet2DPrefab = Resources.Load<GameObject>("Prefabs/Bullet");
-            if (bullet2DPrefab == null)
-                bullet2DPrefab = Resources.Load<GameObject>("Bullet");
+            bulletPrefab = Resources.Load<GameObject>("Prefabs/Bullet");
+            if (bulletPrefab == null)
+                bulletPrefab = Resources.Load<GameObject>("Bullet");
         }
     }
 
@@ -87,7 +87,7 @@ public class EnemyController : MonoBehaviour
 
     private void AimAndFire()
     {
-        if (target == null || muzzle == null || bullet2DPrefab == null)
+        if (target == null || muzzle == null || bulletPrefab == null)
             return;                                       // без цели или ссылок стрельбы нет
 
         // Поворачиваем башню (и дуло как её ребёнка) к цели
@@ -97,7 +97,7 @@ public class EnemyController : MonoBehaviour
         bool hasLOS = HasLineOfSight(muzzle.position, target.position, target);
         if (hasLOS && dist <= fireDistance && cooldownTimer <= 0f)   // цель в зоне огня и готовность есть
         {
-            Shoot2D();                                    // создаём пулю новой системы
+            Shoot();                                    // создаём пулю новой системы
             cooldownTimer = fireCooldown;                 // сбрасываем таймер
 
             // Если стреляли из выглядывания — начинаем откат к укрытию
@@ -210,13 +210,11 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    private void Shoot2D()
+    private void Shoot()
     {
-        // Bullet2D берёт направление из transform.up. Создаём с ориентацией дула и небольшим выносом вперёд
+        // Пуля летит вдоль transform.up, поэтому смещаем немного вперёд
         Vector3 spawnPos = muzzle.position + muzzle.up * 0.2f;
-        var go = Instantiate(bullet2DPrefab, spawnPos, muzzle.rotation);
-        var b = go.GetComponent<Bullet2D>();
-        if (b != null) b.SetOwner(transform);
+        var go = Instantiate(bulletPrefab, spawnPos, muzzle.rotation);
     }
 
     // ------ Утилиты ИИ ------
