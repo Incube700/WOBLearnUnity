@@ -10,13 +10,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float fireCooldown = 0.3f; // задержка между выстрелами
     [SerializeField] private Health health; // здоровье игрока
 
-    private float _nextFireTime; // время следующего допустимого выстрела
+    private float _nextFireTime; // время следующего выстрела
     private float _nextContactDamageTime; // таймер урона от контакта
 
     private void Update()
     {
         AimTurret(); // поворачиваем башню на курсор
-        HandleFire(); // проверяем выстрел
+        HandleFire(); // проверяем возможность выстрела
     }
 
     private void FixedUpdate()
@@ -32,10 +32,11 @@ public class PlayerController : MonoBehaviour
 
     private void AimTurret()
     {
-        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(GameInput.Instance.PointerScreen); // переводим курсор в мировые координаты
-        Vector2 dir = (mouseWorld - turret.position); // направление от башни к курсору
+        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(
+            GameInput.Instance.PointerScreen); // мировые координаты курсора
+        Vector2 dir = mouseWorld - turret.position; // направление от башни к курсору
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg; // переводим направление в градусы
-        turret.rotation = Quaternion.Euler(0f, 0f, angle - 90f); // поворачиваем башню так, чтобы её верх смотрел на курсор
+        turret.rotation = Quaternion.Euler(0f, 0f, angle - 90f); // направляем башню на курсор
     }
 
     private void HandleFire()
@@ -55,4 +56,3 @@ public class PlayerController : MonoBehaviour
         collision.collider.GetComponent<Health>()?.ApplyDamage(1); // наносим 1 единицу урона
     }
 }
-
